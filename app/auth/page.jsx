@@ -243,8 +243,27 @@ await supabase.from("users").insert({
                     {loginErrors.password && <p className="text-red-500 text-xs mt-1">{loginErrors.password}</p>}
                   </div>
                   <div className="text-right">
-                    <button className="text-xs text-yellow-600 hover:underline">Forgot Password?</button>
-                  </div>
+  <button
+    onClick={async () => {
+      if (!loginData.email.trim()) {
+        setLoginErrors({ ...loginErrors, email: "Enter your email first to reset password" });
+        return;
+      }
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        loginData.email.trim(),
+        { redirectTo: `${window.location.origin}/reset-password` }
+      );
+      if (error) {
+        setLoginErrors({ ...loginErrors, email: error.message });
+      } else {
+        alert("Password reset email sent! Check your inbox.");
+      }
+    }}
+    className="text-xs text-yellow-600 hover:underline"
+  >
+    Forgot Password?
+  </button>
+</div>
                   <button
                     onClick={handleLogin}
                     disabled={loginLoading}
