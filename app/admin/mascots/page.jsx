@@ -67,9 +67,11 @@ function AdminNavbar() {
   return (
     <nav className="bg-black text-white flex items-center justify-between px-8 py-3 sticky top-0 z-50">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center border-2 border-yellow-300 flex-shrink-0">
-          <span className="text-black font-extrabold text-xs text-center leading-tight px-1">CMR</span>
-        </div>
+        <img
+  src="https://qyptjphqesakvegkgekx.supabase.co/storage/v1/object/public/images/CMR%20logo.png"
+  alt="CMR Logo"
+  className="w-14 h-14 rounded-full object-cover border-2 border-yellow-300"
+/>
         <h1 className="text-white font-extrabold text-xl">Welcome to Admin Panel !</h1>
       </div>
       <div className="flex items-center gap-5">
@@ -167,7 +169,7 @@ function MascotCalendarModal({ mascot, onClose }) {
 
       setBookedDates([...new Set([...fromAvailability, ...fromBookings])]);
     } catch (err) {
-      console.error("Failed to fetch availability:", err);
+      console.error("Failed to fetch availability:", JSON.stringify(err));
     } finally {
       setLoadingDates(false);
     }
@@ -206,7 +208,7 @@ function MascotCalendarModal({ mascot, onClose }) {
         if (error) throw error;
       }
     } catch (err) {
-      console.error("Failed to update availability:", err);
+      console.error("Failed to update availability:", JSON.stringify(err));
       // Revert optimistic update on error
       setBookedDates(prev =>
         isCurrentlyBooked ? [...prev, dateStr] : prev.filter(x => x !== dateStr)
@@ -373,7 +375,9 @@ export default function AdminMascots() {
   async function fetchMascots() {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from("mascots").select("*");
+      const { data, error } = await supabase
+  .from("mascots")
+  .select("mascot_id, mascot_name, Category, description, price, inclusions, status");
       if (error) throw error;
       setMascots((data || []).map(m => ({
         id: m.mascot_id,
@@ -385,7 +389,7 @@ export default function AdminMascots() {
         inclusions: m.inclusions || "",
       })));
     } catch (err) {
-      console.error("Failed to fetch mascots:", err);
+      console.error("Failed to fetch mascots:", JSON.stringify(err));
     } finally {
       setLoading(false);
     }
@@ -404,14 +408,24 @@ export default function AdminMascots() {
     return errors;
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setForm(f => ({ ...f, image: reader.result }));
-    reader.readAsDataURL(file);
-  };
-
+  const handleImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `mascot-${Date.now()}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage
+      .from("images")
+      .upload(fileName, file, { upsert: true });
+    if (uploadError) throw uploadError;
+    const { data } = supabase.storage
+      .from("images")
+      .getPublicUrl(fileName);
+    setForm(f => ({ ...f, image: data.publicUrl }));
+  } catch (err) {
+    console.error("Image upload failed:", err);
+  }
+};
   // ✅ Add to Supabase
   const handleAdd = async () => {
     const errors = validateForm();
@@ -429,7 +443,7 @@ export default function AdminMascots() {
       setAddModal(false); setForm(emptyForm); setFormErrors({});
       showSuccess(`${form.name.trim()} added successfully!`);
     } catch (err) {
-      console.error("Add failed:", err);
+      console.error("Add failed:", JSON.stringify(err));
       showSuccess("Failed to add mascot.");
     }
   };
@@ -457,7 +471,7 @@ export default function AdminMascots() {
       setEditModal(null); setForm(emptyForm); setFormErrors({});
       showSuccess("Mascot updated successfully!");
     } catch (err) {
-      console.error("Edit failed:", err);
+      console.error("Edit failed:", JSON.stringify(err));
       showSuccess("Failed to update mascot.");
     }
   };
@@ -471,7 +485,7 @@ export default function AdminMascots() {
       setDeleteConfirm(null);
       showSuccess("Mascot deleted.");
     } catch (err) {
-      console.error("Delete failed:", err);
+      console.error("Delete failed:", JSON.stringify(err));
       showSuccess("Failed to delete mascot.");
     }
   };
