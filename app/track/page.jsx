@@ -26,11 +26,11 @@ function Navbar() {
 
   return (
     <nav className="bg-black text-white flex items-center justify-between px-8 py-3 sticky top-0 z-50">
-      <div className="w-14 h-14 rounded-full bg-yellow-400 flex items-center justify-center border-2 border-yellow-300">
-        <span className="text-black font-extrabold text-xs text-center leading-tight px-1">
-          Cavite<br />Mascot<br />Rentals
-        </span>
-      </div>
+     <img
+  src="https://qyptjphqesakvegkgekx.supabase.co/storage/v1/object/public/images/CMR%20logo.png"
+  alt="CMR Logo"
+  className="w-14 h-14 rounded-full object-cover border-2 border-yellow-300"
+/>
       <div className="flex gap-10 text-base font-semibold tracking-wide">
         <Link href="/" className="hover:text-yellow-400 transition-colors">Home</Link>
         <Link href="/mascots" className="hover:text-yellow-400 transition-colors">Mascot</Link>
