@@ -30,9 +30,11 @@ function Navbar() {
 
   return (
     <nav className="bg-black text-white flex items-center justify-between px-8 py-3 sticky top-0 z-50">
-      <div className="w-14 h-14 rounded-full bg-yellow-400 flex items-center justify-center border-2 border-yellow-300">
-        <span className="text-black font-extrabold text-xs text-center leading-tight px-1">Cavite<br />Mascot<br />Rentals</span>
-      </div>
+      <img
+  src="https://qyptjphqesakvegkgekx.supabase.co/storage/v1/object/public/images/CMR%20logo.png"
+  alt="CMR Logo"
+  className="w-14 h-14 rounded-full object-cover border-2 border-yellow-300"
+/>
       <div className="flex gap-10 text-base font-semibold">
         <Link href="/" className="hover:text-yellow-400 transition-colors">Home</Link>
         <Link href="/mascots" className="text-yellow-400">Mascot</Link>
@@ -170,9 +172,9 @@ useEffect(() => {
         .filter(Boolean);
 
       setBooked([...new Set([...fromBookings, ...fromAvailability])]);
-    } catch (err) {
-      console.error("Failed to fetch booked dates:", err);
-    }
+   } catch (err) {
+  console.error("Failed to fetch mascots:", JSON.stringify(err));
+}
   }
   fetchBookedDates();
 }, [mascotId]);
@@ -283,7 +285,7 @@ export default function MascotDetailPage() {
           note: defaultNote,
         });
       } catch (err) {
-        console.error("Failed to fetch mascot:", err);
+        console.error("Failed to fetch mascot:", JSON.stringify(err));
         setMascot(null);
       } finally {
         setLoading(false);
