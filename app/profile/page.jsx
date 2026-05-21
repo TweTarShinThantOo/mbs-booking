@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import { supabase } from "../../lib/supabase";
 
 function Navbar() {
   const { cart } = useCart();
@@ -13,11 +14,11 @@ function Navbar() {
 
   return (
     <nav className="bg-black text-white flex items-center justify-between px-8 py-3 sticky top-0 z-50">
-      <div className="w-14 h-14 rounded-full bg-yellow-400 flex items-center justify-center border-2 border-yellow-300">
-        <span className="text-black font-extrabold text-xs text-center leading-tight px-1">
-          Cavite<br />Mascot<br />Rentals
-        </span>
-      </div>
+      <img
+  src="https://qyptjphqesakvegkgekx.supabase.co/storage/v1/object/public/images/CMR%20logo.png"
+  alt="CMR Logo"
+  className="w-14 h-14 rounded-full object-cover border-2 border-yellow-300"
+/>
       <div className="flex gap-10 text-base font-semibold">
         <Link href="/" className="hover:text-yellow-400 transition-colors">Home</Link>
         <Link href="/mascots" className="hover:text-yellow-400 transition-colors">Mascot</Link>
@@ -141,16 +142,75 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSave = () => {
-    const newErrors = {};
-    if (!firstName.trim()) newErrors.firstName = "First name is required";
-    if (!email.trim()) newErrors.email = "Email is required";
-    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
-    login({ name: `${firstName} ${lastName}`.trim(), email });
+  const handleSave = async () => {
+  const newErrors = {};
+  if (!firstName.trim()) newErrors.firstName = "First name is required";
+  if (!email.trim()) newErrors.email = "Email is required";
+  if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+
+  try {
+    // ✅ Save to public.users table
+    const { error } = await supabase
+      .from("users")
+      .update({
+        full_name: `${firstName} ${lastName}`.trim(),
+        email: email.trim(),
+      })
+      .eq("user_id", user.id);
+
+    if (error) throw error;
+
+    // ✅ Update local auth context
+    login({
+      ...user,
+      name: `${firstName} ${lastName}`.trim(),
+      email: email.trim(),
+    });
+
     setSaved(true);
     setErrors({});
     setTimeout(() => setSaved(false), 3000);
-  };
+  } catch (err) {
+    console.error("Save failed:", err);
+    setErrors({ email: "Failed to save changes. Please try again." });
+  }
+};
+
+const handlePasswordChange = async () => {
+  if (!newPassword.trim()) return;
+  if (newPassword.length < 6) {
+    setErrors({ ...errors, newPassword: "Password must be at least 6 characters" });
+    return;
+  }
+
+  try {
+    // ✅ Verify old password first
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: oldPassword,
+    });
+
+    if (signInError) {
+      setErrors({ ...errors, oldPassword: "Old password is incorrect" });
+      return;
+    }
+
+    // ✅ Update password in Supabase Auth
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) throw error;
+
+    setNewPassword("");
+    setOldPassword("");
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  } catch (err) {
+    console.error("Password change failed:", err);
+    setErrors({ ...errors, newPassword: "Failed to update password." });
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-900">
@@ -250,46 +310,57 @@ export default function ProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">New Password</label>
-                  <input
-                    type="password"
-                    placeholder="New Password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full border border-gray-300 bg-white rounded-lg px-4 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  />
-                </div>
+  <label className="block text-xs font-medium text-gray-600 mb-1">New Password</label>
+  <input
+    type="password"
+    placeholder="New Password"
+    value={newPassword}
+    onChange={(e) => setNewPassword(e.target.value)}
+    className="w-full border border-gray-300 bg-white rounded-lg px-4 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+  />
+  {errors.newPassword && <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>}
+</div>
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Old Password</label>
-                  <input
-                    type="password"
-                    placeholder="Old Password"
-                    value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
-                    className="w-full border border-gray-300 bg-white rounded-lg px-4 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  />
-                </div>
+<div>
+  <label className="block text-xs font-medium text-gray-600 mb-1">Old Password</label>
+  <input
+    type="password"
+    placeholder="Old Password"
+    value={oldPassword}
+    onChange={(e) => setOldPassword(e.target.value)}
+    className="w-full border border-gray-300 bg-white rounded-lg px-4 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+  />
+  {errors.oldPassword && <p className="text-red-500 text-xs mt-1">{errors.oldPassword}</p>}
+</div>
 
               </div>
 
               {/* Save */}
-              <div className="mt-6 flex items-center justify-end gap-4">
-                {saved && (
-                  <p className="text-green-600 text-sm font-semibold flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Changes saved!
-                  </p>
-                )}
-                <button
-                  onClick={handleSave}
-                  className="px-8 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-lg transition-colors text-sm"
-                >
-                  Save Changes
-                </button>
-              </div>
+             <div className="mt-6 flex items-center justify-end gap-4">
+  {saved && (
+    <p className="text-green-600 text-sm font-semibold flex items-center gap-1">
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+      </svg>
+      Changes saved!
+    </p>
+  )}
+  {/* ✅ Show change password button only if new password is filled */}
+  {newPassword && (
+    <button
+      onClick={handlePasswordChange}
+      className="px-8 py-2 bg-black hover:bg-gray-800 text-white font-bold rounded-lg transition-colors text-sm"
+    >
+      Change Password
+    </button>
+  )}
+  <button
+    onClick={handleSave}
+    className="px-8 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-lg transition-colors text-sm"
+  >
+    Save Changes
+  </button>
+</div>
 
             </div>
           </div>
