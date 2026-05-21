@@ -33,9 +33,11 @@ function Navbar() {
 
   return (
     <nav className="bg-black text-white flex items-center justify-between px-8 py-3 sticky top-0 z-50">
-      <div className="w-14 h-14 rounded-full bg-yellow-400 flex items-center justify-center border-2 border-yellow-300">
-        <span className="text-black font-extrabold text-xs text-center leading-tight px-1">Cavite<br />Mascot<br />Rentals</span>
-      </div>
+      <img
+  src="https://qyptjphqesakvegkgekx.supabase.co/storage/v1/object/public/images/CMR%20logo.png"
+  alt="CMR Logo"
+  className="w-14 h-14 rounded-full object-cover border-2 border-yellow-300"
+/>
       <div className="flex gap-10 text-base font-semibold">
         <Link href="/" className="hover:text-yellow-400 transition-colors">Home</Link>
         <Link href="/mascots" className="text-yellow-400">Mascot</Link>
@@ -152,20 +154,23 @@ export default function MascotsPage() {
   useEffect(() => {
   async function fetchMascots() {
     try {
-      const { data, error } = await supabase.from("mascots").select("*");
+      const { data, error } = await supabase
+  .from("mascots")
+  .select("mascot_id, mascot_name, Category, description, price, inclusions, status, image");
       if (error) throw error;
-      const mapped = (data || []).map(m => ({
+      setMascots((data || []).map(m => ({
   id: m.mascot_id,
   name: m.mascot_name,
-  category: m.Category,  // ✅ capital C
+  category: m.Category,
   description: m.description || "",
   price: m.price,
-  image: m.image || null,  // ✅ also changed from image_url to image
-}));
+  image: m.image || null, // ✅ now a URL from Storage
+  inclusions: m.inclusions || "",
+})));
       console.log("Mapped mascots:", mapped); // ✅ here
       setMascots(mapped);
     } catch (err) {
-      console.error("Failed to fetch mascots:", err);
+      console.error("Failed to fetch mascots:", JSON.stringify(err));
     } finally {
       setLoading(false);
     }
