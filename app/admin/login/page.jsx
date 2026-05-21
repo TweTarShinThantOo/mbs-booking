@@ -124,9 +124,11 @@ console.log("user id:", data.user.id); // ✅ add this
     <div className="min-h-screen bg-neutral-900 flex flex-col items-center justify-center px-4 py-12">
 
       <div className="flex items-center gap-4 mb-8">
-        <div className="w-16 h-16 rounded-full bg-yellow-400 flex items-center justify-center border-2 border-yellow-300">
-          <span className="text-black font-extrabold text-xs text-center leading-tight px-1">Cavite<br />Mascot<br />Rentals</span>
-        </div>
+        <img
+  src="https://qyptjphqesakvegkgekx.supabase.co/storage/v1/object/public/images/CMR%20logo.png"
+  alt="CMR Logo"
+  className="w-14 h-14 rounded-full object-cover border-2 border-yellow-300"
+/>
         <div>
           <h1 className="text-white font-extrabold text-2xl leading-tight">Admin Portal</h1>
           <p className="text-gray-400 text-sm">Cavite Mascot Rentals — Booking System</p>
