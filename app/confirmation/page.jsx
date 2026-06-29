@@ -1,7 +1,6 @@
 "use client";
-export const dynamic = 'force-dynamic';
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "../../context/CartContext";
@@ -11,10 +10,10 @@ function Navbar() {
   return (
     <nav className="bg-black text-white flex items-center justify-between px-8 py-3 sticky top-0 z-50">
       <img
-  src="https://qyptjphqesakvegkgekx.supabase.co/storage/v1/object/public/images/CMR%20logo.png"
-  alt="CMR Logo"
-  className="w-14 h-14 rounded-full object-cover border-2 border-yellow-300"
-/>
+        src="https://qyptjphqesakvegkgekx.supabase.co/storage/v1/object/public/images/CMR%20logo.png"
+        alt="CMR Logo"
+        className="w-14 h-14 rounded-full object-cover border-2 border-yellow-300"
+      />
       <div className="flex gap-10 text-base font-semibold tracking-wide">
         <Link href="/" className="hover:text-yellow-400 transition-colors">Home</Link>
         <Link href="/mascots" className="hover:text-yellow-400 transition-colors">Mascot</Link>
@@ -78,7 +77,8 @@ function Footer() {
   );
 }
 
-export default function ConfirmationPage() {
+// ✅ Separate component that uses useSearchParams
+function ConfirmationContent() {
   const searchParams = useSearchParams();
   const ticket = searchParams.get("ticket") || "";
   const total = searchParams.get("total") || "0";
@@ -88,8 +88,6 @@ export default function ConfirmationPage() {
 
   useEffect(() => {
     if (!ticket) return;
-
-    // Only save if booking page hasn't already saved it
     const existing = sessionStorage.getItem(`booking_${ticket}`);
     if (existing) return;
 
@@ -115,53 +113,65 @@ export default function ConfirmationPage() {
   }, [ticket, total, name, phone, address]);
 
   return (
+    <main className="flex-1 px-6 pb-8 flex items-center justify-center">
+      <div className="w-full max-w-lg bg-yellow-400 rounded-xl px-10 py-12 flex flex-col items-center text-center">
+
+        <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center mb-6 shadow-lg">
+          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+
+        <h1 className="text-black font-bold text-xl mb-1">Your Booking is Successful !</h1>
+        <p className="text-black font-semibold text-base mb-1">Thank You !</p>
+        <p className="text-black font-semibold text-base mb-6">Your Booking ID</p>
+
+        <div className="bg-white rounded-lg px-10 py-3 mb-8 shadow">
+          <span className="text-gray-900 font-bold text-lg tracking-widest">{ticket}</span>
+        </div>
+
+        <p className="text-black text-sm mb-8 opacity-80">
+          Use this ID on the <strong>Track</strong> page to check your booking status.
+        </p>
+
+        <div className="flex gap-4 w-full">
+          <Link
+            href="/"
+            className="flex-1 bg-white hover:bg-gray-100 text-black font-bold py-3 rounded-lg transition-colors text-sm text-center"
+          >
+            Back Home
+          </Link>
+          <Link
+            href="/mascots"
+            className="flex-1 bg-white hover:bg-gray-100 text-black font-bold py-3 rounded-lg transition-colors text-sm text-center"
+          >
+            Check More
+          </Link>
+        </div>
+
+      </div>
+    </main>
+  );
+}
+
+// ✅ Main page wraps content in Suspense
+export default function ConfirmationPage() {
+  return (
     <div className="min-h-screen flex flex-col bg-neutral-800">
       <Navbar />
-
       <div className="px-8 pt-4 pb-1">
         <span className="text-gray-400 text-sm tracking-widest uppercase">Confirmation Page</span>
       </div>
-
-      <main className="flex-1 px-6 pb-8 flex items-center justify-center">
-        <div className="w-full max-w-lg bg-yellow-400 rounded-xl px-10 py-12 flex flex-col items-center text-center">
-
-          {/* Success icon */}
-          <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center mb-6 shadow-lg">
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
+      <Suspense fallback={
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-white text-sm">Loading...</p>
           </div>
-
-          <h1 className="text-black font-bold text-xl mb-1">Your Booking is Successful !</h1>
-          <p className="text-black font-semibold text-base mb-1">Thank You !</p>
-          <p className="text-black font-semibold text-base mb-6">Your Booking ID</p>
-
-          <div className="bg-white rounded-lg px-10 py-3 mb-8 shadow">
-            <span className="text-gray-900 font-bold text-lg tracking-widest">{ticket}</span>
-          </div>
-
-          <p className="text-black text-sm mb-8 opacity-80">
-            Use this ID on the <strong>Track</strong> page to check your booking status.
-          </p>
-
-          <div className="flex gap-4 w-full">
-            <Link
-              href="/"
-              className="flex-1 bg-white hover:bg-gray-100 text-black font-bold py-3 rounded-lg transition-colors text-sm text-center"
-            >
-              Back Home
-            </Link>
-            <Link
-              href="/mascots"
-              className="flex-1 bg-white hover:bg-gray-100 text-black font-bold py-3 rounded-lg transition-colors text-sm text-center"
-            >
-              Check More
-            </Link>
-          </div>
-
-        </div>
-      </main>
-
+        </main>
+      }>
+        <ConfirmationContent />
+      </Suspense>
       <Footer />
     </div>
   );
